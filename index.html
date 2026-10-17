@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팅커심 — 만들고 코딩하는 3D 로봇 교실</title>
+  <meta name="description" content="3D 모양을 만들고 모터·LED·센서를 붙여 코딩으로 움직여 보는 초등학생용 웹 시뮬레이터">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧩</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nanum+Gothic:wght@400;700;800&family=Nanum+Gothic+Coding:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+      "three-mesh-bvh": "https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.7.6/build/index.module.js",
+      "three-bvh-csg": "https://cdn.jsdelivr.net/npm/three-bvh-csg@0.0.16/build/index.module.js"
+    }
+  }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/blockly@10.4.3/blockly_compressed.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/blockly@10.4.3/blocks_compressed.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/blockly@10.4.3/javascript_compressed.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/blockly@10.4.3/python_compressed.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/blockly@10.4.3/msg/ko.js"></script>
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand" title="팅커심">🧩 <span>팅커심</span></div>
+    <nav id="tabs"></nav>
+    <div class="proj">
+      <button class="pname" id="pname" title="프로젝트 이름 바꾸기">새 프로젝트</button>
+      <span id="saved" class="saved"></span>
+      <button class="btn small" id="btnSave" title="내 컴퓨터에 파일로 저장">💾 파일로 저장</button>
+      <button class="btn small" id="btnOpen" title="파일 열기">📂 열기</button>
+    </div>
+  </header>
+  <main id="screens"></main>
+  <div id="loading" class="loading">🧩 팅커심을 준비하고 있어요…</div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
