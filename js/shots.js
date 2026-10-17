@@ -15,6 +15,18 @@ async function carParts(app) {
   return p;
 }
 
+async function makerScene(app, name, list) {
+  await app.open(newProject(name), { go: 'maker' }); await wait(300);
+  const m = app.screens.maker;
+  const st = m.struct;
+  st.name = name;
+  st.shapes = list.map(([type, pos, size, color, hole]) => ({ id: Math.random().toString(36).slice(2), type, pos, size, rot: [0, 0, 0], color: color || '#94a3b8', hole: !!hole }));
+  await whenCsgReady();
+  app.go('home'); app.go('maker'); await wait(200);
+  app.screens.maker.api.select([]);
+  return m;
+}
+
 const SHOTS = {
   async home(app) { app.go('home'); },
   async 'home-examples'(app) { app.go('home'); await wait(100); $('#exgrid').scrollIntoView(); },
@@ -39,7 +51,7 @@ const SHOTS = {
     app.go('home'); app.go('maker'); await wait(200);
     clickText(app.screens.maker.el, '크기');
     app.screens.maker.el.querySelector('canvas').dispatchEvent(new Event('noop'));
-    app.screens.maker.select?.(s.id);
+    app.screens.maker.select([s.id]);
   },
   async 'maker-3'(app) {
     await app.open(newProject('나의 자동차'), { go: 'maker' }); await wait(300);
@@ -51,14 +63,32 @@ const SHOTS = {
     app.go('home'); app.go('maker');
   },
   async 'maker-hole'(app) {
-    await app.open(newProject('구멍 연습'), { go: 'maker' }); await wait(300);
-    clickText(app.screens.maker.el, '상자'); clickText(app.screens.maker.el, '원기둥'); await wait(100);
-    const st = app.project.structures[0];
-    st.shapes[0].size = [80, 30, 50]; st.shapes[0].pos = [0, 15, 0]; st.shapes[0].color = '#f97316';
-    st.shapes[1].size = [24, 50, 24]; st.shapes[1].pos = [0, 20, 0]; st.shapes[1].hole = true;
-    await whenCsgReady();
-    app.go('home'); app.go('maker'); await wait(100);
-    $('#finalBtn').click();
+    const m = await makerScene(app, '구멍 연습', [['box', [0, 15, 0], [80, 30, 50], '#f97316'], ['cylinder', [0, 20, 0], [24, 50, 24], null, true]]);
+    m.api.select(m.struct.shapes.map((n) => n.id)); await wait(100);
+    m.api.groupSel();
+  },
+  async 'maker-multi'(app) {
+    const m = await makerScene(app, '자동차 몸통', [['box', [0, 15, 0], [150, 30, 70], '#3b82f6'], ['box', [-10, 42.5, 0], [70, 25, 60], '#e0f2fe'], ['cylinder', [40, 42, 0], [16, 24, 16], '#facc15']]);
+    m.api.select(m.struct.shapes.map((n) => n.id));
+  },
+  async 'maker-group'(app) {
+    const m = await makerScene(app, '도넛 블럭', [['cylinder', [0, 10, 0], [60, 20, 60], '#ec4899'], ['cylinder', [0, 10, 0], [24, 30, 24], null, true], ['box', [0, 10, 0], [70, 8, 8], null, true]]);
+    m.api.select(m.struct.shapes.map((n) => n.id)); await wait(50);
+    m.api.groupSel();
+  },
+  async 'maker-link'(app) {
+    const m = await makerScene(app, '로봇 머리', [['box', [0, 20, 0], [50, 40, 40], '#cbd5e1'], ['sphere', [-12, 28, 21], [12, 12, 6], '#2563eb'], ['sphere', [12, 28, 21], [12, 12, 6], '#2563eb'], ['cylinder', [0, 46, 0], [4, 12, 4], '#64748b'], ['sphere', [0, 54, 0], [10, 10, 10], '#ef4444']]);
+    m.api.select(m.struct.shapes.map((n) => n.id)); await wait(50);
+    m.api.linkSel();
+  },
+  async 'maker-copy'(app) {
+    const m = await makerScene(app, '바퀴 4개', [['cylinder', [0, 15, 0], [30, 10, 30], '#1f2937']]);
+    m.api.select([m.struct.shapes[0].id]); m.api.copySel(); m.api.paste(); m.api.paste(); m.api.paste();
+  },
+  async 'maker-align'(app) {
+    const m = await makerScene(app, '정렬 연습', [['box', [-30, 10, -10], [20, 20, 20], '#ef4444'], ['cylinder', [0, 15, 15], [20, 30, 20], '#22c55e'], ['star', [35, 3, -5], [30, 6, 30], '#facc15']]);
+    m.api.select(m.struct.shapes.map((n) => n.id)); await wait(50);
+    m.api.align('z', 'center');
   },
   async 'maker-stl'(app) {
     await app.open(newProject('STL 불러오기'), { go: 'maker' }); await wait(300);
@@ -159,10 +189,6 @@ const SHOTS = {
   async codeview(app) {
     await app.openExample('avoid'); app.go('code'); await wait(500);
     clickText(app.screens.code.el, '보드 코드 보기');
-  },
-  async hw(app) {
-    await app.openExample('fan'); app.project.board = 'microbit'; app.go('code'); await wait(500);
-    clickText(app.screens.code.el, '보드 연결');
   },
 };
 

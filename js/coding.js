@@ -5,7 +5,6 @@ import { toolbox, genSim, genText, genBoard, TEXT_API } from './codegen.js';
 import { BOARDS, wiringRows } from './boards.js';
 import { COMPONENTS } from './components.js';
 import { P } from './project.js';
-import { FIRMWARE_ARDUINO, FIRMWARE_MICROBIT, FIRMWARE_PICO } from './hardware.js';
 
 const TEXT_HELP = [
   ['모터("바퀴1", 100);', '모터 돌리기 (-100~100)'],
@@ -41,12 +40,10 @@ export function createCoding(app) {
   const stopBtn = h('button', { class: 'btn stop', onclick: () => runner.stop() }, '■ 멈춤');
   const resetBtn = h('button', { class: 'btn', onclick: () => { runner.stop(true); world.resetSim(); setRunUI(false); } }, '↺ 처음으로');
   const followBtn = h('button', { class: 'btn small toggle on', onclick: () => { world.follow = !world.follow; followBtn.classList.toggle('on', world.follow); } }, '🎥 따라가기');
-  const hwBtn = h('button', { class: 'btn small', onclick: openHw }, '🔌 보드 연결');
   el.append(h('div', { class: 'code-top' },
     h('div', { class: 'segs' }, modeBlock, modeText),
     h('span', { class: 'label' }, '보드'), boardSel,
     h('button', { class: 'btn small', onclick: openCodeView }, '📄 보드 코드 보기'),
-    hwBtn,
     h('span', { class: 'grow' }),
     runBtn, stopBtn, resetBtn, followBtn));
 
@@ -232,7 +229,7 @@ export function createCoding(app) {
       else if (r.comp === 'servo') t = Math.round(st.cur) + '도';
       else if (r.comp === 'linear') t = Math.round(st.cur) + '%';
       else if (r.comp === 'led') t = st.on ? '켜짐' : '꺼짐';
-      else if (r.comp === 'button') t = st.pressed || st.hwPressed ? '눌림 ✋' : '안 눌림';
+      else if (r.comp === 'button') t = st.pressed ? '눌림 ✋' : '안 눌림';
       else if (r.comp === 'distance') t = world.measure(io) + ' cm';
       else if (r.comp === 'line') t = world.lineSee(io) ? '⚫ 검은 선' : '⚪ 흰 바닥';
       else if (r.comp === 'lcd') t = st.lines.filter(Boolean).join(' / ') || '(비어 있음)';
@@ -281,46 +278,6 @@ export function createCoding(app) {
             h('button', { class: 'btn small', onclick: () => downloadFile(bc.file, bc.code, 'text/plain') }, `💾 ${bc.file} 내려받기`),
             h('span', { class: 'hint' }, board.lang === 'arduino' ? '아두이노 IDE(또는 웹 편집기)에 붙여 넣어 보드에 올려요.' : (p.board === 'microbit' ? 'python.microbit.org 에 붙여 넣어 마이크로비트로 보내요.' : '마이크로파이썬 편집기에 main.py 로 저장해요.'))));
         show(0);
-      },
-      buttons: [{ label: '닫기' }],
-    });
-  }
-
-  // ---------- 실제 보드 연결 ----------
-  function openHw() {
-    const p = app.project;
-    const board = BOARDS[p.board];
-    const fw = board.lang === 'arduino' ? FIRMWARE_ARDUINO : p.board === 'microbit' ? FIRMWARE_MICROBIT : FIRMWARE_PICO;
-    const hw = app.hw;
-    modal({
-      title: '🔌 실제 보드와 연결하기',
-      wide: true,
-      body: (c) => {
-        const status = h('b', {}, hw.connected ? '🟢 연결됨' : '⚪ 연결 안 됨');
-        const logv = h('pre', { class: 'hwlog' });
-        const off = hw.on('log', (m) => { logv.textContent = (logv.textContent + m + '\n').split('\n').slice(-12).join('\n'); });
-        const offS = hw.on('status', (v) => { status.textContent = v ? '🟢 연결됨' : '⚪ 연결 안 됨'; });
-        c.closest && setTimeout(() => { const back = c.closest('.modal-back'); if (back) new MutationObserver((_, o) => { if (!back.isConnected) { off(); offS(); o.disconnect(); } }).observe(document.body, { childList: true }); }, 0);
-        c.append(
-          h('p', {}, '시뮬레이션에서 ▶ 실행하면 실제 부품도 똑같이 움직여요. 크롬이나 엣지 브라우저에서 USB 케이블로 연결해요.'),
-          h('ol', { class: 'big-steps' },
-            h('li', {}, h('b', {}, `${board.name}에 "연결 프로그램"을 한 번 올려요. `),
-              p.board === 'microbit' ? h('a', { href: 'https://python.microbit.org/v/3', target: '_blank', rel: 'noopener' }, 'python.microbit.org 열기 ↗') : null,
-              h('details', {}, h('summary', {}, '연결 프로그램 보기'), h('pre', { class: 'codeview small' }, fw),
-                h('button', { class: 'btn tiny', onclick: () => navigator.clipboard.writeText(fw).then(() => toast('📋 복사했어요')) }, '📋 복사'))),
-            h('li', {}, h('b', {}, '부품을 연결표대로 꽂아요. '), h('button', { class: 'btn tiny', onclick: openCodeView }, '📋 연결표 보기')),
-            h('li', {}, h('b', {}, '아래 버튼을 누르고 보드를 골라요.'))),
-          h('div', { class: 'row' },
-            h('button', { class: 'btn primary', onclick: async () => {
-              try {
-                if (hw.connected) await hw.disconnect();
-                else { await hw.connect(p); toast('🟢 보드와 연결했어요'); }
-                hwBtn.classList.toggle('on', hw.connected);
-              } catch (e) { toast('연결하지 못했어요: ' + e.message, 4000); }
-            } }, hw.connected ? '연결 끊기' : '🔌 보드 연결하기'),
-            status),
-          !hw.supported ? h('p', { class: 'warn' }, '⚠ 이 브라우저는 USB 연결을 지원하지 않아요. 크롬 또는 엣지를 사용해 주세요.') : null,
-          logv);
       },
       buttons: [{ label: '닫기' }],
     });

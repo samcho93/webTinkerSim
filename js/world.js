@@ -193,7 +193,7 @@ export class World extends Emitter {
   freshState(block, model) {
     return {
       target: model.value, cur: model.value, speed: 0, curSpeed: 0,
-      on: false, color: LED_COLORS.빨강, lines: ['', ''], pressed: false, hwPressed: false,
+      on: false, color: LED_COLORS.빨강, lines: ['', ''], pressed: false,
     };
   }
 
@@ -437,7 +437,7 @@ export class World extends Emitter {
   read(type, key) {
     const io = this.resolve(key);
     if (!io) return type === 'distance' ? 400 : false;
-    if (type === 'button') return !!(io.state.pressed || io.state.hwPressed);
+    if (type === 'button') return !!(io.state.pressed);
     if (type === 'distance') return this.measure(io);
     if (type === 'line') return this.lineSee(io);
     return 0;
@@ -516,7 +516,7 @@ export class World extends Emitter {
         }
       } else if (comp === 'button' && m.ref.cap) {
         const c = m.ref.cap;
-        const y = st.pressed || st.hwPressed ? c.userData.capDown : c.userData.capRest;
+        const y = st.pressed ? c.userData.capDown : c.userData.capRest;
         c.position.y += (y - c.position.y) * Math.min(1, dt * 30);
       }
     }

@@ -4,7 +4,6 @@ import { newProject, P } from './project.js';
 import { saveProject, loadProject } from './store.js';
 import { World } from './world.js';
 import { Runner } from './runner.js';
-import { Hardware } from './hardware.js';
 import { setProjectGetter, defineBlocks } from './codegen.js';
 import { whenCsgReady } from './shapes.js';
 import { createHome } from './home.js';
@@ -21,8 +20,6 @@ class App extends Emitter {
     this.project = newProject();
     this.world = new World();
     this.runner = new Runner(this.world);
-    this.hw = new Hardware(this.world);
-    this.runner.on('tone', (io, f, sec) => this.hw.tone(io, f, sec));
     this.screens = {};
     this.current = null;
     this.dirty = false;

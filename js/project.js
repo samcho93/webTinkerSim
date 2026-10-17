@@ -1,5 +1,6 @@
 // 프로젝트 = 모양들 + 블럭들 + 로봇(조립) + 코드 + 보드 정보
 import { uid } from './util.js';
+import { walkNodes } from './shapes.js';
 
 export function newProject(name = '새 프로젝트') {
   return {
@@ -50,7 +51,7 @@ export const P = {
   // 쓰지 않는 STL 데이터 정리
   cleanMeshes(p) {
     const used = new Set();
-    for (const s of p.structures) for (const sh of s.shapes) if (sh.type === 'stl') used.add(sh.mesh);
+    for (const s of p.structures) walkNodes(s.shapes, (sh) => { if (sh.type === 'stl') used.add(sh.mesh); });
     for (const k of Object.keys(p.meshes || {})) if (!used.has(k)) delete p.meshes[k];
   },
 };
