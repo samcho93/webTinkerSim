@@ -116,7 +116,7 @@ export class Resizer {
       else if (kind === 'lift') hd.position.set(c.x, box.max.y, c.z);
       else hd.position.set(sx ? (sx > 0 ? box.max.x : box.min.x) : c.x, box.min.y, sz ? (sz > 0 ? box.max.z : box.min.z) : c.z);
       hd.getWorldPosition(wp);
-      const k = wp.distanceTo(cam) * 0.016;
+      const k = wp.distanceTo(cam) * 0.0075;
       hd.scale.setScalar(k * (kind === 'corner' ? 1 : 0.8));
       if (kind === 'lift') { hd.position.y += k * 3.2; hd.rotation.x = Math.PI; }
       if (kind === 'top') hd.position.y += 0;
@@ -124,7 +124,10 @@ export class Resizer {
       hd.material.color.set(hov ? COL.hover : COL[kind]);
     }
     // 숫자 위치
-    const off = Math.max(s.x, s.z) * 0.12 + 6;
+    this.group.updateMatrixWorld(true);
+    // 숫자는 모서리 바로 옆에 (화면에서 늘 같은 거리만큼)
+    const cw = c.clone().applyMatrix4(this.group.matrixWorld);
+    const off = cw.distanceTo(cam) * 0.022;
     const place = (axis, p, val) => {
       const d = this.labels[axis];
       if (d.querySelector('input')) return;
@@ -141,13 +144,23 @@ export class Resizer {
     this.group.updateMatrixWorld(true);
     place('x', new THREE.Vector3(c.x, box.min.y, box.max.z + off), s.x);
     place('z', new THREE.Vector3(box.max.x + off, box.min.y, c.z), s.z);
-    place('y', new THREE.Vector3(box.min.x - off * 0.7, c.y, box.max.z + off * 0.7), s.y);
+    place('y', new THREE.Vector3(box.min.x - off * 0.6, c.y, box.max.z + off * 0.6), s.y);
   }
 
   pickHandle(e) {
     if (!this.active || !this.group.visible) return null;
     const hit = this.v.hits(e, this.handles, false)[0];
-    return hit ? hit.object : null;
+    if (hit) return hit.object;
+    // 손잡이가 작아도 잡기 쉽게: 화면에서 12픽셀 안이면 잡아요
+    const r = this.v.dom.getBoundingClientRect();
+    let best = null, bd = 12;
+    const p = new THREE.Vector3();
+    for (const hd of this.handles) {
+      hd.getWorldPosition(p).project(this.v.camera);
+      const d = Math.hypot(r.left + ((p.x + 1) / 2) * r.width - e.clientX, r.top + ((1 - p.y) / 2) * r.height - e.clientY);
+      if (d < bd) { bd = d; best = hd; }
+    }
+    return best;
   }
 
   // 마우스를 누르면 손잡이인지 확인해요. 손잡이면 true
