@@ -374,3 +374,15 @@ details summary { cursor: pointer; color: var(--pri); margin: 4px 0; }
 .align-grid { display: grid; grid-template-columns: 44px 1fr 1fr 1fr; gap: 4px; align-items: center; margin: 8px 0; font-size: 12px; color: var(--muted); }
 .label.inline { margin: 0 4px 0 0; }
 .props select.input { margin: 6px 0; }
+
+/* 크기 상자 숫자 */
+.dim-label {
+  position: absolute; display: none; transform: translate(-50%, -50%); z-index: 2;
+  background: #fff; border: 2px solid #2563eb; color: #1e3a8a; border-radius: 8px;
+  padding: 1px 7px; font: 700 13px 'Nanum Gothic', sans-serif; cursor: text; user-select: none; white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.dim-label:hover { background: #eff6ff; }
+.dim-label.editing { padding: 0; border-color: #f59e0b; }
+.dim-input { width: 70px; border: 0; border-radius: 6px; padding: 3px 6px; font: 700 14px 'Nanum Gothic', sans-serif; outline: none; }
+.dim-tip { position: absolute; display: none; z-index: 3; pointer-events: none; background: #1e293b; color: #fff; font-size: 12px; padding: 4px 8px; border-radius: 8px; white-space: nowrap; }

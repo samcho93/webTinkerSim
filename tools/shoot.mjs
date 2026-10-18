@@ -6,7 +6,7 @@ import { join } from 'node:path';
 
 const base = process.argv[2] || 'http://localhost:8791';
 const only = process.argv.slice(3);
-const NAMES = ['home', 'home-examples', 'run-car', 'save', 'maker-1', 'maker-2', 'maker-3', 'maker-hole', 'maker-multi', 'maker-group', 'maker-link', 'maker-copy', 'maker-align', 'maker-stl', 'blocks-1', 'blocks-wheel', 'blocks-servo', 'assemble-1', 'assemble-ghost', 'assemble-car', 'code-car', 'code-text', 'arm-assemble', 'arm-run', 'avoid-run', 'line-run', 'button', 'board-select', 'codeview'];
+const NAMES = ['home', 'home-examples', 'run-car', 'save', 'maker-1', 'maker-2', 'maker-resize', 'maker-3', 'maker-hole', 'maker-multi', 'maker-group', 'maker-link', 'maker-copy', 'maker-align', 'maker-stl', 'blocks-1', 'blocks-wheel', 'blocks-servo', 'assemble-1', 'assemble-ghost', 'assemble-car', 'code-car', 'code-text', 'arm-assemble', 'arm-run', 'avoid-run', 'line-run', 'button', 'board-select', 'codeview'];
 const list = only.length ? only : NAMES;
 const EDGE = process.env.EDGE || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const port = 9333;

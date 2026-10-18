@@ -44,14 +44,19 @@ const SHOTS = {
     clickText(app.screens.maker.el, '상자');
   },
   async 'maker-2'(app) {
-    await app.open(newProject('나의 자동차'), { go: 'maker' }); await wait(300);
-    clickText(app.screens.maker.el, '상자'); await wait(200);
-    const s = app.project.structures[0].shapes[0];
-    s.size = [150, 30, 70]; s.pos = [0, 15, 0];
-    app.go('home'); app.go('maker'); await wait(200);
-    clickText(app.screens.maker.el, '크기');
-    app.screens.maker.el.querySelector('canvas').dispatchEvent(new Event('noop'));
-    app.screens.maker.select([s.id]);
+    const m = await makerScene(app, '나의 자동차', [['box', [0, 15, 0], [150, 30, 70], '#3b82f6']]);
+    m.api.select([m.struct.shapes[0].id]); await wait(200);
+    m.resizer.update(); m.viewer.fit(m.resizer.frame, { pad: 1.3 });
+  },
+  async 'maker-resize'(app) {
+    const m = await makerScene(app, '나의 자동차', [['box', [0, 15, 0], [150, 30, 70], '#3b82f6']]);
+    m.api.select([m.struct.shapes[0].id]); await wait(200);
+    m.resizer.update(); m.viewer.fit(m.resizer.frame, { pad: 1.3 });
+    await wait(300);
+    m.resizer.labels.y.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    const inp = m.resizer.labels.y.querySelector('input');
+    if (inp) inp.value = '45';
+    m.resizer.hover = m.resizer.handles[3];
   },
   async 'maker-3'(app) {
     await app.open(newProject('나의 자동차'), { go: 'maker' }); await wait(300);

@@ -10,6 +10,7 @@ import {
 import { importStl, exportStl } from './stl.js';
 import { LIB, libStructure } from './library.js';
 import { P } from './project.js';
+import { Resizer } from './resizer.js';
 
 const r1 = (v) => Math.round(v * 10) / 10;
 const CLIP_KEY = 'tsim.clipboard';
@@ -63,7 +64,7 @@ export function createMaker(app) {
   const tb = (label, title, fn, cls = '') => h('button', { class: 'tbtn ' + cls, title, onclick: fn }, label);
   const modeBtns = {};
   const bar1 = h('div', { class: 'toolbar floating maker-bar' });
-  for (const [m, label, key] of [['translate', '✋ 옮기기', 'W'], ['rotate', '🔄 돌리기', 'E'], ['scale', '↔️ 크기', 'R']]) {
+  for (const [m, label, key] of [['size', '✋ 옮기기·크기', 'W'], ['rotate', '🔄 돌리기', 'E'], ['translate', '↕️ 화살표', 'R']]) {
     modeBtns[m] = tb(label, `${label} (${key})`, () => setMode(m));
     bar1.append(modeBtns[m]);
   }
@@ -85,8 +86,14 @@ export function createMaker(app) {
   const crumb = h('div', { class: 'crumb' });
   const rectDiv = h('div', { class: 'select-rect' });
   center.append(viewBox, bar1, bar2, crumb, rectDiv,
-    h('div', { class: 'view-hint' }, '클릭 = 고르기 · Shift+클릭 = 여러 개 고르기 · Shift+빈 곳 끌기 = 네모로 고르기 · 모양 끌기 = 옮기기 · 붙인 묶음 두 번 클릭 = 안쪽 고치기'));
+    h('div', { class: 'view-hint' }, '흰 손잡이 끌기 = 크기 바꾸기 · 숫자 두 번 클릭 = 직접 고치기 · 검은 뿔 = 띄우기 · Shift+클릭 = 여러 개 고르기 · Shift+빈 곳 끌기 = 네모로 고르기 · 모양 끌기 = 옮기기 · 붙인 묶음 두 번 클릭 = 안쪽 고치기'));
   v.mount(viewBox);
+  let mode = 'size';
+  const resizer = new Resizer({
+    v, pivot, container: center, getSnap: () => snap,
+    onStart: () => pushUndo(),
+    onEnd: () => { bake(); rebuild(); commit(); },
+  });
 
   const structSel = h('select', { class: 'input', onchange: () => openStruct(structSel.value) });
   const propBox = h('div', { class: 'props' });
@@ -219,6 +226,7 @@ export function createMaker(app) {
   function setupPivot() {
     tc.detach();
     selHelper.visible = false;
+    resizer.setActive(false);
     const objs = selObjs();
     if (!objs.length || showFinal) return;
     work.updateMatrixWorld(true);
@@ -234,7 +242,8 @@ export function createMaker(app) {
     }
     pivot.updateMatrixWorld(true);
     for (const o of objs) pivot.attach(o);
-    tc.attach(pivot);
+    if (mode === 'size') resizer.setActive(true);
+    else tc.attach(pivot);
     tc.setSpace(objs.length === 1 ? 'local' : 'world');
     highlight(objs);
   }
@@ -275,10 +284,12 @@ export function createMaker(app) {
   }
 
   function setMode(m) {
-    tc.setMode(m);
+    mode = m;
+    if (m !== 'size') tc.setMode(m);
     for (const k in modeBtns) modeBtns[k].classList.toggle('on', k === m);
+    if (struct) { bake(); rebuild(); }
   }
-  setMode('translate');
+  setMode('size');
 
   // ---------------- 되돌리기 ----------------
   const snapshot = () => JSON.stringify({ shapes: struct.shapes, ctx: ctxPath.map((n) => n.id), sel });
@@ -323,7 +334,7 @@ export function createMaker(app) {
     ctxList().push(s);
     sel = [s.id];
     rebuild(); refreshList(); commit();
-    if (struct.shapes.length === 1) v.fit(work, { pad: 4 });
+    if (struct.shapes.length === 1) v.fit(work, { pad: 2.6 });
   }
   function addLib(id) {
     ensureStruct();
@@ -605,6 +616,7 @@ export function createMaker(app) {
   let down = null;
   v.dom.addEventListener('pointerdown', (e) => {
     if (e.button !== 0 || showFinal || !struct) return;
+    if (resizer.pointerDown(e)) { down = null; return; } // 크기 손잡이
     if (tc.axis) return; // 손잡이 잡음
     const pk = pickNode(e);
     down = { x: e.clientX, y: e.clientY, pk };
@@ -711,9 +723,9 @@ export function createMaker(app) {
     else if (ctrl && k === 'g') (e.shiftKey ? ungroupSel() : groupSel());
     else if (ctrl && k === 'b') (e.shiftKey ? ungroupSel() : linkSel());
     else if (k === 'escape') { if (sel.length) select([]); else exitCtx(); }
-    else if (!ctrl && k === 'w') setMode('translate');
+    else if (!ctrl && k === 'w') setMode('size');
     else if (!ctrl && k === 'e') setMode('rotate');
-    else if (!ctrl && k === 'r') setMode('scale');
+    else if (!ctrl && k === 'r') setMode('translate');
     else if (!ctrl && k === 'd') dropToFloor();
     else if (!ctrl && k === 'h') setHole(true);
     else if (!ctrl && k === 's') setHole(false);
@@ -918,6 +930,8 @@ export function createMaker(app) {
     openStruct(id) { app.go('maker'); openStruct(id); },
     select(ids) { select(ids); },
     get struct() { return struct; },
+    viewer: v,
+    resizer,
     api: { groupSel, linkSel, ungroupSel, copySel, paste, duplicate, align, mirror, select, enter, exitCtx, toggleFinal, setType, setHole, setColor, setBox },
     addLibAsNew(id) {
       const s = libStructure(id);
